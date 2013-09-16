@@ -32,10 +32,9 @@ def highlight_membrane_dialog(app):
                                       parent=app.root)
    if pdbCode is None:
        print 'No PDB code supplied'
-       exit(0)
-   
-   #For now, assume the protein is not loaded yet
-   highlight_membrane(pdbCode, 0)
+   else:
+       #For now, assume the protein is not loaded yet
+       highlight_membrane(pdbCode, 0)
    
 def highlight_membrane(pdbCode, loaded=0):
     if not loaded:
