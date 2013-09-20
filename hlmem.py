@@ -12,13 +12,17 @@ from pymol import cmd, setting
 ##PDBTM
 NS_PDBTM="{http://pdbtm.enzim.hu}"
 E_CHAIN="CHAIN"
+E_SIDEDEF="SIDEDEFINITION"
 E_REG="REGION"
 A_CHAINID="CHAINID"
 A_CHAINTYPE="TYPE"
 
 ##Color Coding
 SEGMENT_HIGHLIGHTS = {'H': 'yellow', 'U': 'green', 'F': 'forest', '1': 'red', '2' : 'blue', 'L': 'orange' }
+
+##Nomenclature
 SEGMENT_LABELS = {'H': 'Helix', 'U': 'Unknown', 'F': 'Interfacial_helix', '1': 'Side_1', '2' : 'Side_2', 'L': 'Membrane_loop' }
+REVERSE_SIDES = { 'Outside': 'Inside', 'Inside': 'Outside' }
 
 def __init__(self):
    self.menuBar.addmenuitem('Plugin', 'command',
@@ -89,6 +93,13 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
         
     #xml.dump(rootElem)
     #print list(rootElem)
+
+    #Check whether a Side definition cross-reference to TOPDB is present
+    #If so, use it to rename Side1/2 to Inside/Outside
+    side_def = root.find(NS_PDBTM+E_SIDEDEF)
+    if side_def is not None:
+         SEGMENT_LABELS['1'] = side_def.attrib['Side1']
+         SEGMENT_LABELS['2'] = REVERSE_SIDES[SEGMENT_LABELS['1']]
 
     #Get a list of all chain elements
     chains_list = root.findall(NS_PDBTM+E_CHAIN)
