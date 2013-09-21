@@ -144,12 +144,13 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
     
 def highlight_molecule(chains_dict, pdbCode, loaded):
     if not loaded:
-        cmd.do('color white, %s' % (pdbCode))
+        cmd.color('white', pdbCode)
     for chain in chains_dict:
         for label, (col, region) in sorted(chains_dict[chain].items()):
             #Below statement uses Pymol's atom selection macro syntax: http://pymol.sourceforge.net/newman/user/S0220commands.html
-            cmd.do('select %s, /%s//%s/%s' % (label, pdbCode, chain, region))
-            cmd.do('color %s, %s' %(col, label))
+            if cmd.count_atoms('/%s//%s/%s' % ( pdbCode, chain, region)) > 0:
+                cmd.select(label, '/%s//%s/%s' % ( pdbCode, chain, region))
+                cmd.color(col, label)
 
 def parse_pdbtm_annotation(arg_type):
     """
