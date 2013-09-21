@@ -6,6 +6,7 @@ import os
 import tkSimpleDialog
 import tkMessageBox
 import urllib2
+import pymol
 from pymol import cmd, setting
 
 ###Constants
@@ -48,8 +49,8 @@ def highlight_membrane(pdbCode, loaded=0):
     highlight_molecule(chains_dict, pdbCode.lower(), loaded)
    
 def main(sys_argv=sys.argv):
-    #This will crash at some point, since pymol isn't running
-    pdbCode = '1XFH'
+    pdbCode = '1XFH'.lower()
+    pymol.finish_launching()
     cmd.fetch(pdbCode)
     xml = get_pdbtm_xml(pdbCode)
     chains_dict = get_pdbtm_annotation(pdbCode, xml)
