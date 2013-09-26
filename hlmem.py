@@ -19,7 +19,7 @@ A_CHAINID="CHAINID"
 A_CHAINTYPE="TYPE"
 
 ##Color Coding
-SEGMENT_HIGHLIGHTS = {'H': 'yellow', 'U': 'green', 'F': 'forest', '1': 'red', '2' : 'blue', 'L': 'orange' }
+SEGMENT_HIGHLIGHTS = {'Helix': 'yellow', 'Unknown': 'green', 'Interfacial_helix': 'forest', 'Side_1': 'red', 'Side_2' : 'blue', 'Membrane_loop': 'orange', 'Outside': 'blue', 'Inside': 'red' }
 
 ##Nomenclature
 SEGMENT_LABELS = {'H': 'Helix', 'U': 'Unknown', 'F': 'Interfacial_helix', '1': 'Side_1', '2' : 'Side_2', 'L': 'Membrane_loop' }
@@ -123,18 +123,18 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
                 region_atom_begin = region.attrib.get("pdb_beg")
                 region_atom_end = region.attrib.get("pdb_end")
                 region_type = region.attrib.get("type")
-                region_label = parse_pdbtm_annotation(region_type)
+                region_label = SEGMENT_LABELS[parse_pdbtm_annotation(region_type)]
                 
                 #If we are processing a helix, add an entry with Helix\d, one for every helix
                 if region_label == 'H':
-                    region_dict[chain_id + '_' + SEGMENT_LABELS[region_label] + str(helix_count) + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_atom_begin + '-' + region_atom_end]
+                    region_dict[chain_id + '_' + region_label + str(helix_count) + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_atom_begin + '-' + region_atom_end]
                     helix_count += 1
                 #In all other casesm e.g. Side1 pool all the regions and make one big selection for all residues in Side1
                 else:
-                    if chain_id + '_' + SEGMENT_LABELS[region_label] + '_' + arg_pdbid in region_dict:
-                        region_dict[chain_id + '_' + SEGMENT_LABELS[region_label] + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + SEGMENT_LABELS[region_label] + '_' + arg_pdbid][1] + '+' + region_atom_begin + '-' + region_atom_end]
+                    if chain_id + '_' + region_label + '_' + arg_pdbid in region_dict:
+                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + region_label + '_' + arg_pdbid][1] + '+' + region_atom_begin + '-' + region_atom_end]
                     else:
-                        region_dict[chain_id + '_' + SEGMENT_LABELS[region_label] + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , '+' + region_atom_begin + '-' + region_atom_end]
+                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , '+' + region_atom_begin + '-' + region_atom_end]
                         
             chains_dict[chain_id] = region_dict
     else:
