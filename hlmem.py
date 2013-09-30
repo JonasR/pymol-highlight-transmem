@@ -19,10 +19,18 @@ A_CHAINID="CHAINID"
 A_CHAINTYPE="TYPE"
 
 ##Color Coding
-SEGMENT_HIGHLIGHTS = {'H': 'yellow', 'U': 'green', 'F': 'forest', '1': 'red', '2' : 'blue', 'L': 'orange' }
+SEGMENT_HIGHLIGHTS = {
+        'H': 'yellow', 'U': 'green', 'F': 'forest', 
+        '1': 'red', '2' : 'blue', 'L': 'orange', 
+        'I': 'deeppurple', 'C': 'yellow', 'B': 'yellow'
+        }
 
 ##Nomenclature
-SEGMENT_LABELS = {'H': 'Helix', 'U': 'Unknown', 'F': 'Interfacial_helix', '1': 'Side_1', '2' : 'Side_2', 'L': 'Membrane_loop' }
+SEGMENT_LABELS = {
+        'H': 'Helix', 'U': 'Unknown', 'F': 'Interfacial_helix',
+        '1': 'Side_1', '2' : 'Side_2', 'L': 'Membrane_loop',
+        'I': 'Membrane_inside', 'C': 'Coil', 'B': 'Beta-strand'
+        }
 REVERSE_SIDES = { 'Outside': 'Inside', 'Inside': 'Outside' }
 
 def __init__(self):
@@ -112,7 +120,7 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
             chain_id = chain.attrib.get(A_CHAINID)
             chain_type = chain.attrib.get(A_CHAINTYPE)
             
-            if not chain_type == "alpha":   #At some later point add beta (maybe)
+            if not (chain_type == "alpha" or chain_type == "beta"): 
                 continue
             
             region_dict = {}
