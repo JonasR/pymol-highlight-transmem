@@ -15,12 +15,13 @@ Install
 Usage
 -----
 * Pymol GUI: Plugin -> Membrane Protein Highlight
-* Pymol CLI: hmem [pdbCode]
+* Pymol CLI: hmem [pdbCode [,loaded]]
+
+If loaded=0 (default), the structure will be fetched before highlighting, otherwise only selections will be created and colourin performed.
 
 Planned improvements:
 * Alternative annotation from [OPM][2]
-* Use [TOPDB][3] cross-references in PDBTM (if available) to rename Side1/Side2 to inside/outside
-* Allow preloaded structures (overwriting any conflicting present highlights) 
+* Limit selections and highlights to one chain
 
 [1]: http://pdbtm.enzim.hu/
 [2]: http://opm.phar.umich.edu/
