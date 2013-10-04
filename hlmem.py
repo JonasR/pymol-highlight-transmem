@@ -135,7 +135,7 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
                 region_label = SEGMENT_LABELS[parse_pdbtm_annotation(region_type)]
                 
                 #If we are processing a helix, add an entry with Helix\d, one for every helix
-                if region_label == 'H':
+                if region_label == 'Helix':
                     region_dict[chain_id + '_' + region_label + str(helix_count) + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_atom_begin + '-' + region_atom_end]
                     helix_count += 1
                 #In all other casesm e.g. Side1 pool all the regions and make one big selection for all residues in Side1
