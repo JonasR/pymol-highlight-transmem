@@ -52,10 +52,10 @@ def highlight_membrane_dialog(app):
    
 def highlight_membrane(pdbCode, loaded=0):
     if not loaded:
-        cmd.fetch(pdbCode)
-    xml = get_pdbtm_xml(pdbCode)
-    chains_dict = get_pdbtm_annotation(pdbCode, xml)
-    highlight_molecule(chains_dict, pdbCode.lower(), loaded)
+        cmd.fetch(pdbCode[0:4])
+    xml = get_pdbtm_xml(pdbCode[0:4])
+    chains_dict = get_pdbtm_annotation(pdbCode[0:4], xml)
+    highlight_molecule(chains_dict, pdbCode[0:4].lower(), loaded, pdbCode[4:5])
    
 def main(sys_argv=sys.argv):
     pdbCode = '1XFH'.lower()
@@ -63,7 +63,7 @@ def main(sys_argv=sys.argv):
     cmd.fetch(pdbCode)
     xml = get_pdbtm_xml(pdbCode)
     chains_dict = get_pdbtm_annotation(pdbCode, xml)
-    highlight_molecule(chains_dict, pdbCode.lower(),0)
+    highlight_molecule(chains_dict, pdbCode.lower())
  
 def get_pdbtm_xml(arg_pdbid):
     """
@@ -152,16 +152,18 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
         
     return chains_dict
     
-def highlight_molecule(chains_dict, pdbCode, loaded):
+def highlight_molecule(chains_dict, pdbCode, loaded=0, desiredChain=''):
     if not loaded:
         cmd.color('white', pdbCode)
     for chain in chains_dict:
-        for label, (col, region) in sorted(chains_dict[chain].items()):
-            #Below statement uses Pymol's atom selection macro syntax: http://pymol.sourceforge.net/newman/user/S0220commands.html
-            if cmd.count_atoms('/%s//%s/%s' % ( pdbCode, chain, region)) > 0:
-                cmd.select(label, '/%s//%s/%s' % ( pdbCode, chain, region))
-                cmd.color(col, label)
-
+        #If no desired chains is given, handle all, otherwise only the specified one
+        if desiredChain == '' or desiredChain == chain: 
+            for label, (col, region) in sorted(chains_dict[chain].items()):
+                #Below statement uses Pymol's atom selection macro syntax: http://pymol.sourceforge.net/newman/user/S0220commands.html
+                if cmd.count_atoms('/%s//%s/%s' % ( pdbCode, chain, region)) > 0:
+                    cmd.select(label, '/%s//%s/%s' % ( pdbCode, chain, region))
+                    cmd.color(col, label)
+    
 def parse_pdbtm_annotation(arg_type):
     """
     Parse the PDBTM type annotation to the common standard used for all databases.

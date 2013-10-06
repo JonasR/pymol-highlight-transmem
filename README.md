@@ -21,7 +21,6 @@ If loaded=0 (default), the structure will be fetched before highlighting, otherw
 
 Planned improvements:
 * Alternative annotation from [OPM][2]
-* Limit selections and highlights to one chain
 
 [1]: http://pdbtm.enzim.hu/
 [2]: http://opm.phar.umich.edu/
