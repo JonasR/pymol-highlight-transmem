@@ -51,6 +51,7 @@ def highlight_membrane_dialog(app):
        highlight_membrane(pdbCode, 0)
    
 def highlight_membrane(pdbCode, loaded=0):
+    loaded = int(loaded)
     if not loaded:
         cmd.fetch(pdbCode[0:4])
     xml = get_pdbtm_xml(pdbCode[0:4])
