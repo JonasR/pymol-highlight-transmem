@@ -77,7 +77,7 @@ def get_pdbtm_xml(arg_pdbid):
     if not os.access(localfn, os.R_OK):
         #Retrieve file from remote
         try:
-            xmlfile = urllib2.urlopen('http://pdbtm_data.enzim.hu/database/' + arg_pdbid[1:3] + '/' + arg_pdbid.lower() + '.xml')
+            xmlfile = urllib2.urlopen('http://pdbtm.enzim.hu/data/database/' + arg_pdbid[1:3] + '/' + arg_pdbid.lower() + '.xml')
             output = open(localfn,'wb')
             output.write(xmlfile.read())
             output.close()
