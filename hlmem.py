@@ -3,20 +3,26 @@
 import xml.etree.ElementTree as xml
 import sys
 import os
+import re
 import tkSimpleDialog
 import tkMessageBox
 import urllib2
+import BeautifulSoup
 import pymol
 from pymol import cmd, setting
 
 ###Constants
 ##PDBTM
+DB_ID_PDBTM="PDBTM"
 NS_PDBTM="{http://pdbtm.enzim.hu}"
 E_CHAIN="CHAIN"
 E_SIDEDEF="SIDEDEFINITION"
 E_REG="REGION"
 A_CHAINID="CHAINID"
 A_CHAINTYPE="TYPE"
+##OPM
+DB_ID_OPM="OPM"
+OPM_SUBUNITS_WEBSITE="http://opm.phar.umich.edu/subunits.php"
 
 ##Color Coding
 SEGMENT_HIGHLIGHTS = {
@@ -50,16 +56,26 @@ def highlight_membrane_dialog(app):
        #For now, assume the protein is not loaded yet
        highlight_membrane(pdbCode, 0)
    
-def highlight_membrane(pdbCode, loaded=0):
+def highlight_membrane(pdbCode, loaded=0, db=DB_ID_PDBTM):
     loaded = int(loaded)
     if not loaded:
         cmd.fetch(pdbCode[0:4])
-    xml = get_pdbtm_xml(pdbCode[0:4])
-    chains_dict = get_pdbtm_annotation(pdbCode[0:4], xml)
+        
+    if db==DB_ID_PDBTM:
+        xml = get_pdbtm_xml(pdbCode[0:4])
+        chains_dict = get_pdbtm_annotation(pdbCode[0:4], xml)
+    else:
+        if db==DB_ID_OPM:
+            opm_file = get_opm_file(pdbCode[0:4])
+            chains_dict = get_opm_annotation(opm_file)
+        else:
+            print 'Unkown database supplied: %s. Exiting' % (db)
+            exit(1)
     highlight_molecule(chains_dict, pdbCode[0:4].lower(), loaded, pdbCode[4:5])
    
 def main(sys_argv=sys.argv):
-    pdbCode = '1XFH'.lower()
+    #pdbCode = '1XFH'.lower()
+    pdbCode = '2NWL'.lower()
     pymol.finish_launching()
     cmd.fetch(pdbCode)
     xml = get_pdbtm_xml(pdbCode)
@@ -86,6 +102,77 @@ def get_pdbtm_xml(arg_pdbid):
             exit(1)
     return localfn
     
+def get_opm_file(arg_pdbid):
+    """
+    Ensure the flatfile with annotations from OPM for the given PDB id is present
+    and return the path to it.
+    Search order: 1:Locally in fetch_path, 2:OPM Remote
+    """
+    
+    path = setting.get('fetch_path')    #Path also used by the 'fetch' command. If not set in pymolrc, it's probably ~
+    localfn = os.path.join(path, arg_pdbid.upper() + '.opm')
+    if not os.access(localfn, os.R_OK):
+        #Retrieve the file from OPM website
+        try:
+            #Retrieve all segments at once
+            opm_segments_urlobj = urllib2.urlopen(OPM_SUBUNITS_WEBSITE)
+            opm_segments_html = opm_segments_urlobj.read()
+            #Get the relevant part from that site
+            soup = BeautifulSoup.BeautifulSoup(opm_segments_html)
+            opm_segments_div = str(soup.find("div", {"id": "body"}))
+            
+            if opm_segments_div is not None:
+                print "Parsing OPM annotations"
+                opm_segments = opm_segments_div.split('<br />')
+                pdb_id = ''
+                arg_pdbid_lines = []
+                for segment in opm_segments:
+                    #print 'Parsing %s' % (segment)
+                    match = re.search('(\w{4}) <b>(\w)</b>', segment)
+                    if match:
+                        pdb_id = match.group(1)
+                        if pdb_id == arg_pdbid.lower():
+                            arg_pdbid_lines.append(segment)
+                #Write all relevant lines to output file
+                if len(arg_pdbid_lines) > 0:
+                    output = open(localfn,'wb')
+                    output.write('\n'.join(arg_pdbid_lines) + '\n')
+                    output.close()
+                else:
+                    print 'Could not find any annotation for pdbid %s in OPM' % (arg_pdbid)
+                    exit(1)
+            else:
+                print 'Error during accession or retrieval of OPM file. Cannot find segment annotations in page.'
+                exit(1)
+        except:
+            print 'Error during accession or retrieval of OPM file'
+            raise
+    else:
+        print 'Found local file'
+    return localfn
+    
+def get_opm_annotation(arg_file):
+    """
+    Parse a OPM file to 3D structure annotation
+    """
+    chains_dict = {}
+    
+    with open(arg_file) as f:
+        for line in f:
+            match = re.match('(\w{4})\s+<b>(\w)</b>.+Segments:(.+)', line)
+            if match:
+                region_dict = {}
+                pdbid = match.group(1)
+                chain_id = match.group(2)
+                segments = match.group(3)
+                #Iterate all segment annotations
+                for segment in re.finditer("(\d+)\s*\(\s*(\d+\s*-\s*\d+)\s*\)",segments):
+                    #Use helix numbering from OPM (provided on group 1) and interval (at group 2)
+                    region_dict[chain_id + '_' + 'Helix' + segment.group(1) + '_' + pdbid + '_' + DB_ID_OPM] = [SEGMENT_HIGHLIGHTS['Helix'], segment.group(2)]
+                chains_dict[chain_id] = region_dict
+    
+    return chains_dict
+
 def get_pdbtm_annotation(arg_pdbid, arg_xml):
     """
     Parse a PDBTM XML-File to 3D-structure annotation for given PDB-ID
@@ -137,14 +224,14 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
                 
                 #If we are processing a helix, add an entry with Helix\d, one for every helix
                 if region_label == 'Helix':
-                    region_dict[chain_id + '_' + region_label + str(helix_count) + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_atom_begin + '-' + region_atom_end]
+                    region_dict[chain_id + '_' + region_label + str(helix_count) + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , region_atom_begin + '-' + region_atom_end]
                     helix_count += 1
                 #In all other casesm e.g. Side1 pool all the regions and make one big selection for all residues in Side1
                 else:
                     if chain_id + '_' + region_label + '_' + arg_pdbid in region_dict:
-                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + region_label + '_' + arg_pdbid][1] + '+' + region_atom_begin + '-' + region_atom_end]
+                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + region_label + '_' + arg_pdbid][1] + '+' + region_atom_begin + '-' + region_atom_end]
                     else:
-                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid] = [SEGMENT_HIGHLIGHTS[region_label] , '+' + region_atom_begin + '-' + region_atom_end]
+                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , '+' + region_atom_begin + '-' + region_atom_end]
                         
             chains_dict[chain_id] = region_dict
     else:
