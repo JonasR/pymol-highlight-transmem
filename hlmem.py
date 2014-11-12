@@ -167,8 +167,10 @@ def get_opm_annotation(arg_file):
                 segments = match.group(3)
                 #Iterate all segment annotations
                 for segment in re.finditer("(\d+)\s*\(\s*(\d+\s*-\s*\d+)\s*\)",segments):
+                    #Too much whitespace will trip up PyMOL, so get rid of it
+                    region_interval = re.sub('\s', '', segment.group(2))
                     #Use helix numbering from OPM (provided on group 1) and interval (at group 2)
-                    region_dict[chain_id + '_' + 'Helix' + segment.group(1) + '_' + pdbid + '_' + DB_ID_OPM] = [SEGMENT_HIGHLIGHTS['Helix'], segment.group(2)]
+                    region_dict[chain_id + '_' + 'Helix' + segment.group(1) + '_' + pdbid + '_' + DB_ID_OPM] = [SEGMENT_HIGHLIGHTS['Helix'], region_interval]
                 chains_dict[chain_id] = region_dict
     
     return chains_dict
