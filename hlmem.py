@@ -228,8 +228,8 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
                     helix_count += 1
                 #In all other casesm e.g. Side1 pool all the regions and make one big selection for all residues in Side1
                 else:
-                    if chain_id + '_' + region_label + '_' + arg_pdbid in region_dict:
-                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + region_label + '_' + arg_pdbid][1] + '+' + region_atom_begin + '-' + region_atom_end]
+                    if chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM in region_dict:
+                        region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM][1] + '+' + region_atom_begin + '-' + region_atom_end]
                     else:
                         region_dict[chain_id + '_' + region_label + '_' + arg_pdbid + '_' + DB_ID_PDBTM] = [SEGMENT_HIGHLIGHTS[region_label] , '+' + region_atom_begin + '-' + region_atom_end]
                         
