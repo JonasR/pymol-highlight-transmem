@@ -11,7 +11,7 @@ Install
 * For current session only, execute in Pymol CLI:
 
         import hlmem
-* For permanent availability:
+* For permanent availability and GUI:
     * Start Pymol and go to Plugin -> Manage Plugins -> Install, then choose hlmem.py
     * Or dedicate a local folder as additional script ressource and include it in your pymolrc, as seen [here][4]
 
@@ -29,7 +29,6 @@ Default highlights are from PDBTM, but OPM can be specified as well.
 Planned improvements:
 -----
 * Offer to copy OPM annotations for redundant hits (annotations are only given for a non-redundant set of structures)
-* Update GUI to new features available through 'hmem' on the commandline
 
 References
 -----

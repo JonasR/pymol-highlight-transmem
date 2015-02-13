@@ -4,12 +4,14 @@ import xml.etree.ElementTree as xml
 import sys
 import os
 import re
-import tkSimpleDialog
-import tkMessageBox
 import urllib2
 import BeautifulSoup
 import pymol
+import webbrowser
+import tkMessageBox
+import Pmw
 from pymol import cmd, setting
+from Tkinter import *
 
 ###Constants
 ##PDBTM
@@ -40,6 +42,60 @@ SEGMENT_LABELS = {
         }
 REVERSE_SIDES = { 'Outside': 'Inside', 'Inside': 'Outside' }
 
+class SettingsWindow:
+    def __init__(self, app):
+        #Root window has to be created before variables are created
+        #We also have to derive this from PyMol's mainloop using Toplevel or things wont work
+        self.root = Toplevel(app.root)
+        
+        self.annotationDB = StringVar()
+        self.annotationDB.set(DB_ID_PDBTM)
+
+        self.loaded = BooleanVar()
+        self.loaded.set(0) 
+    
+        labelPdbEntry = Label(self.root, text="Enter PDB(Chain) identifier:")
+        labelPdbEntry.grid(row=0, column=0, sticky=W)
+        self.pdbEntry = Entry(self.root)
+        self.pdbEntry.grid(row=0, column=1, columnspan=2)
+        self.pdbEntry.insert(0,'1c3wA')
+
+        labelDB = Label(self.root, text="Choose annotation database:")
+        labelDB.grid(row=1, column=0, sticky=W)
+        Radiobutton(self.root, text=DB_ID_PDBTM, variable=self.annotationDB, value=DB_ID_PDBTM).grid(row=1, column=1, sticky=W)
+        Radiobutton(self.root, text=DB_ID_OPM, variable=self.annotationDB, value=DB_ID_OPM).grid(row=1, column=2, sticky=W)
+     
+        cbLoaded = Checkbutton(self.root, text="Loaded?", variable=self.loaded)
+        cbLoaded.grid(row=2, column=0, sticky=W) 
+
+        Button(self.root, text="Go", command=self.handle_dialog).grid(row=3, column=2, sticky=E, pady=4)
+        Button(self.root, text="References", command=self.showInfo).grid(row=3, column=1, sticky=E, pady=4)
+        Button(self.root, text="Exit", command=self.root.destroy).grid(row=3, column=0, sticky=W, pady=4)
+        
+        #Tooltips
+        balloon = Pmw.Balloon(self.root)
+        balloon.bind(labelPdbEntry, "Enter a PDB code with, or without a chain identifer, e.g. 1c3wA")
+        balloon.bind(labelDB, "Highlight segments according to annotation of which database")
+        balloon.bind(cbLoaded, "Don't fetch protein but perform highlight with structure that is already loaded?")
+
+    def handle_dialog(self):
+        pdbCode = self.pdbEntry.get()
+        if pdbCode is None or len(pdbCode) < 4 or len(pdbCode) > 6:
+            tkMessageBox.showerror('Error','Please enter a PDB code')
+        else:
+           highlight_membrane(pdbCode.strip(), self.loaded.get(), self.annotationDB.get())
+           self.root.destroy()
+ 
+    def showInfo(self):
+        infoWindow = Toplevel(self.root)
+        Label(infoWindow, text="Code is at https://github.com/JonasR/pymol-highlight-transmem").grid(row=0, column=0, sticky=W)
+        Button(infoWindow, text="Open", command=lambda: webbrowser.open("https://github.com/JonasR/pymol-highlight-transmem")).grid(row=0, column=1, sticky=E)
+
+        Label(infoWindow, text="PDBTM: Kozma,D. et al. (2013) PDBTM: Protein Data Bank of transmembrane proteins after 8 years. Nucleic Acids Res., 41, D524-9.").grid(row=1, column=0, sticky=W)
+        Button(infoWindow, text="Open", command=lambda: webbrowser.open('http://dx.doi.org/10.1093/nar/gks1169')).grid(row=1, column=1, sticky=W)
+        Label(infoWindow, text="OPM: Lomize,M. A  et al. (2012) OPM database and PPM web server: resources for positioning of proteins in membranes. Nucleic Acids Res., 40, D370-6.").grid(row=2, column=0, sticky=W)
+        Button(infoWindow, text="Open", command=lambda: webbrowser.open('http://dx.doi.org/10.1093/nar/gkr703')).grid(row=2, column=1)
+ 
 def __init__(self):
    self.menuBar.addmenuitem('Plugin', 'command',
                             'Membrane Protein Highlight',
@@ -47,14 +103,7 @@ def __init__(self):
                             command = lambda s=self : highlight_membrane_dialog(s))
 
 def highlight_membrane_dialog(app):
-   pdbCode = tkSimpleDialog.askstring('Membrane Protein Highlight',
-                                      'Please enter a 4-digit pdb code:',
-                                      parent=app.root)
-   if pdbCode is None:
-       print 'No PDB code supplied'
-   else:
-       #For now, assume the protein is not loaded yet
-       highlight_membrane(pdbCode, 0)
+    SettingsWindow(app)
    
 def highlight_membrane(pdbCode, loaded=0, db=DB_ID_PDBTM):
     loaded = int(loaded)
