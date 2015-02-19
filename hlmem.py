@@ -53,6 +53,8 @@ class SettingsWindow:
 
         self.loaded = BooleanVar()
         self.loaded.set(0)
+        self.coloring = BooleanVar()
+        self.coloring.set(1)
 
         labelPdbEntry = Label(self.root, text="Enter PDB(Chain) identifier:")
         labelPdbEntry.grid(row=0, column=0, sticky=W)
@@ -67,6 +69,8 @@ class SettingsWindow:
 
         cbLoaded = Checkbutton(self.root, text="Loaded?", variable=self.loaded)
         cbLoaded.grid(row=2, column=0, sticky=W)
+        cbColoring = Checkbutton(self.root, text="Color?", variable=self.coloring)
+        cbColoring.grid(row=2, column=1, sticky=W)
 
         Button(self.root, text="Go", command=self.handle_dialog).grid(row=3, column=2, sticky=E, pady=4)
         Button(self.root, text="References", command=self.showInfo).grid(row=3, column=1, sticky=E, pady=4)
@@ -83,7 +87,7 @@ class SettingsWindow:
         if pdbCode is None or len(pdbCode) < 4 or len(pdbCode) > 6:
             tkMessageBox.showerror('Error','Please enter a PDB code')
         else:
-            highlight_membrane(pdbCode.strip(), self.loaded.get(), self.annotationDB.get())
+            highlight_membrane(pdbCode.strip(), self.loaded.get(), self.annotationDB.get(), self.coloring.get())
             self.root.destroy()
 
     def showInfo(self):
@@ -105,8 +109,9 @@ def __init__(self):
 def highlight_membrane_dialog(app):
     SettingsWindow(app)
 
-def highlight_membrane(pdbCode, loaded=0, db=DB_ID_PDBTM):
+def highlight_membrane(pdbCode, loaded=0, db=DB_ID_PDBTM, color=1):
     loaded = int(loaded)
+    color = int(color)
     if not loaded:
         cmd.fetch(pdbCode[0:4])
 
@@ -120,7 +125,7 @@ def highlight_membrane(pdbCode, loaded=0, db=DB_ID_PDBTM):
         else:
             print 'Unkown database supplied: %s. Exiting' % (db)
             exit(1)
-    highlight_molecule(chains_dict, pdbCode[0:4].lower(), loaded, pdbCode[4:5])
+    highlight_molecule(chains_dict, pdbCode[0:4].lower(), loaded, pdbCode[4:5], color)
 
 def main(sys_argv=sys.argv):
     #pdbCode = '1XFH'.lower()
@@ -287,8 +292,8 @@ def get_pdbtm_annotation(arg_pdbid, arg_xml):
 
     return chains_dict
 
-def highlight_molecule(chains_dict, pdbCode, loaded=0, desiredChain=''):
-    if not loaded:
+def highlight_molecule(chains_dict, pdbCode, loaded=0, desiredChain='', performColoring=1):
+    if not loaded and performColoring:
         cmd.color('white', pdbCode)
     for chain in chains_dict:
         #If no desired chains is given, handle all, otherwise only the specified one
@@ -297,7 +302,8 @@ def highlight_molecule(chains_dict, pdbCode, loaded=0, desiredChain=''):
                 #Below statement uses Pymol's atom selection macro syntax: http://pymol.sourceforge.net/newman/user/S0220commands.html
                 if cmd.count_atoms('/%s//%s/%s' % ( pdbCode, chain, region)) > 0:
                     cmd.select(label, '/%s//%s/%s' % ( pdbCode, chain, region))
-                    cmd.color(col, label)
+                    if performColoring:
+                        cmd.color(col, label)
 
 def parse_pdbtm_annotation(arg_type):
     """

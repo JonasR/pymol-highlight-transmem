@@ -18,13 +18,14 @@ Install
 Usage
 -----
 * Pymol GUI: Plugin -> Membrane Protein Highlight
-* Pymol CLI: hmem [pdbCode [,loaded,(OPM|PDBTM)]]
+* Pymol CLI: hmem [pdbCode [,loaded,(OPM|PDBTM)],coloring]
 
-If loaded=0 (default), the structure will be fetched before highlighting, otherwise only selections will be created and colouring performed.
+If loaded=0 (default), the structure will be fetched before highlighting, otherwise only selections will be created. Coloring of those selection is enabled by default but can be supressed.
 Default highlights are from PDBTM, but OPM can be specified as well.
 
         hmem 2nwl,0,OPM     //Fetch 2nwl and highlight according to OPM
         hmem 2nwl           //Use already loaded 2nwl and highlight according to PDBTM
+        hmem 2nwl,0,PDBTM,0 //Fetch 2nwl and create selections for transmembrane segments according to PDBTM
 
 Planned improvements:
 -----
